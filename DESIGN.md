@@ -35,7 +35,3 @@ real friendship outcomes are available.
 Two people who share only hobbies will fizzle. Two people who share
 rhythms and values but have different interests will thrive. The
 scoring model reflects this: hobbies are the smallest slice.
-
-## Similarity math
-
-**Ordinal questions** (single-select with a natural order):
