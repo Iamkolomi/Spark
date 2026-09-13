@@ -115,3 +115,81 @@ questionnaire actually measures the same axis as the dealbreaker.
 The other five would require different questions or explicit
 self-report from the other person. Inferring "cancels a lot" from
 "I don't mind being cancelled on" is a false positive.
+## Coverage flags
+
+- `lowConfidence` — coverage < 60% (pair-level)
+- `lowCompletion` — coverage < 80% (pair-level)
+- `noOverlap` — zero shared scored answers. Band becomes
+  `Insufficient data`.
+
+## Config assertions
+
+At module load, the engine asserts:
+
+1. Section weights sum to 100.
+2. Per-section question weights sum to section weight.
+3. Each section has ≥ 1 weighted question.
+4. Dealbreaker options carry a boolean `detectable`.
+5. Detectable dealbreakers carry a string `trait`.
+6. Every detectable `trait` is reachable via some option's `implies`.
+7. Ordinal single-select options have integer `pos` values forming
+   exactly `0..n-1`.
+8. Proximity maps have no duplicate keys (neither `a|b` nor `b|a`),
+   valid option values, and numeric values in `[0, 1]`.
+9. `implies`, if present, is `string[]`.
+10. `suppressedByGate`, if present, is `A`–`D`.
+
+These assertions catch silent config failures — the class of bug
+that has repeatedly slipped through reviews.
+
+## Public API
+
+    const {
+      QUESTIONNAIRE, SECTIONS, BANDS, MIN_ANSWERED,
+      validateProfile, validatePair,
+      scoreMatch, scoreBatch, report,
+    } = require('./engine');
+
+- `validateProfile(profile) → string[]` — empty array if valid.
+- `scoreMatch(a, b) → result` — includes `error` field if invalid.
+- `scoreBatch(subject, candidates, limit) → { results, errors, subjectManualFlags }`.
+- `report(result) → string` — formatted human-readable output.
+
+## Result shape
+
+    {
+      pair, total, band,
+      normalizedTotal, penaltyAmount, penaltyClipped,
+      postPenaltyTotal, preCapTotal, capped,
+      sections,              // keyed by section id
+      gates,                 // [{ id, cap, reason }]
+      penalties,             // string[]
+      manualReviewBy,        // { byA: {flag,label}[], byB: [...] }
+      manualReviewTriggered,
+      highestAlignment,      // up to 3 { text, similarity, answerA, answerB }
+      lowestAlignment,
+      coverage, lowConfidence, lowCompletion, noOverlap,
+    }
+
+## Known limitations
+
+- **Weights are reasoned, not fitted.** Tune against real outcomes.
+- **Band labels assume near-full completion.** Partial profiles
+  score low by design.
+- **Chemistry is not modeled.** The engine filters mismatches; it
+  doesn't predict sparks.
+- **5 of 7 dealbreakers are advisory.** See above.
+- **Proximity values for `life_stage` are judgment calls.** Not
+  derived from research.
+
+## Versioning
+
+Each version is a Git tag (`v1.7`, etc.). Breaking changes are
+documented in `CHANGELOG.md` under `### Breaking`.
+
+## What's next
+
+- Minimal 12-question intake for users who won't answer 28.
+- Weight-fitting script to tune `SECTIONS` and thresholds against
+  real friendship outcomes.
+- Batch dashboard built on `scoreBatch()`.
