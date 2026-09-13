@@ -35,3 +35,38 @@ real friendship outcomes are available.
 Two people who share only hobbies will fizzle. Two people who share
 rhythms and values but have different interests will thrive. The
 scoring model reflects this: hobbies are the smallest slice.
+## Similarity math
+
+**Ordinal questions** (single-select with a natural order):
+
+    similarity = 1 − |posA − posB| / (options.length − 1)
+
+Adjacent answers score high. Opposite ends score 0.
+
+**Categorical questions** (single-select, no order):
+
+    similarity = 1 if same value, 0 otherwise
+
+Proximity maps can override specific pairs (e.g. `life_stage`).
+
+**Multi-select questions**:
+
+    similarity = 2 · |A ∩ B| / (|A| + |B|)   (Dice coefficient)
+
+Dice is used instead of Jaccard because Jaccard punishes heavy
+multi-selectors. A user who picks 8 hobbies shouldn't be penalized
+for not matching someone who picks 2.
+
+## Skip = 0
+
+Unanswered scored questions contribute 0 to their section score.
+A section is scored out of its full declared weight, not out of the
+weight of answered questions.
+
+This is deliberate. Skipping hard questions should cost points, not
+preserve the score.
+
+**Consequence:** band labels assume near-full completion. A profile
+with 10 of 27 scored questions answered caps around 45–55 points,
+regardless of how well-matched it is. Use `coverage` to decide
+whether to surface a score to end users.
