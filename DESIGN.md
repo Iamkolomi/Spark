@@ -70,3 +70,48 @@ preserve the score.
 with 10 of 27 scored questions answered caps around 45–55 points,
 regardless of how well-matched it is. Use `coverage` to decide
 whether to surface a score to end users.
+## Gates
+
+Gates cap the total score when certain conditions hold. They exist
+because averaging everything into one number lets incompatible
+pairs through.
+
+| ID | Trigger | Cap |
+|---|---|---|
+| A | No overlap in free time | 35 |
+| B | Logistics < 40% (bad) / < 60% (strained) | 45 / 65 |
+| C | Availability asymmetry ≥ 2 positions | 55 |
+| D | Frequency asymmetry ≥ 3 positions | 60 |
+
+Gates are evaluated **before** dealbreaker penalties so that
+penalties can be suppressed when a gate already covers the same
+offense (see `suppressedByGate`).
+
+## Dealbreakers
+
+Users can select up to 3 dealbreakers from a list of 7. Dealbreakers
+are handled in two ways:
+
+**Detectable dealbreakers** (2 of 7):
+- `surface` — inferred from `convo_type: 'light'`
+- `contact` — inferred from `frequency: 'daily'`
+
+These are inferred from the other person's answers using metadata
+(`implies` on options, `trait` on dealbreakers). If the trait is
+present, a penalty is applied — unless the corresponding gate has
+already fired (via `suppressedByGate`).
+
+**Undetectable dealbreakers** (5 of 7):
+- `cancels`, `behind`, `negative`, `money`, `demanding`
+
+These route to `manualReviewBy`. They are advisory only. Apps that
+display "dealbreakers respected" must treat them as manual review,
+not automated protection.
+
+### Why so few detectable
+
+The two detectable dealbreakers are the only ones where the
+questionnaire actually measures the same axis as the dealbreaker.
+The other five would require different questions or explicit
+self-report from the other person. Inferring "cancels a lot" from
+"I don't mind being cancelled on" is a false positive.
